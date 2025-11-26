@@ -233,7 +233,7 @@ app.get('/debug-files', (req, res) => {
 
 // Catch-all handler: send back React's index.html file for client-side routing
 // MUST be the last route defined
-app.get('*', (req, res) => {
+app.use((req, res) => {
     res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
 });
 

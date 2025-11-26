@@ -201,13 +201,6 @@ app.put('/api/contact/:id', authMiddleware, async (req, res) => {
     }
 });
 
-
-
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
-
 // Debug route to list files
 app.get('/debug-files', (req, res) => {
     const fs = require('fs');
@@ -239,6 +232,12 @@ app.get('/debug-files', (req, res) => {
 });
 
 // Catch-all handler: send back React's index.html file for client-side routing
-app.get(/.*/, (req, res) => {
+// MUST be the last route defined
+app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
+});
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });

@@ -1,0 +1,22 @@
+{
+    "name": "pratyush-tripathi-portfolio",
+    "private": true,
+    "version": "1.0.0",
+    "description": "Full-stack portfolio with contact form and admin dashboard",
+    "scripts": {
+        "client": "cd client && npm run dev",
+        "server": "cd server && npm run dev",
+        "dev": "npm run server & npm run client",
+        "build": "cd client && npm run build",
+        "start": "cd server && npm start",
+        "install-all": "npm install && cd client && npm install && cd ../server && npm install"
+    },
+    "keywords": [
+        "portfolio",
+        "react",
+        "express",
+        "mongodb"
+    ],
+    "author": "Pratyush Tripathi",
+    "license": "ISC"
+}

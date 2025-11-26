@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: pratyush-portfolio
+    runtime: node
+    region: oregon # Change to your preferred region
+    plan: free # Change to paid plan if needed
+    buildCommand: npm run install-all && cd client && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URL
+        sync: false # Set this in Render dashboard
+    healthCheckPath: /api/contacts
+    autoDeploy: true

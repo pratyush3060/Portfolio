@@ -7,9 +7,9 @@
         "client": "cd client && npm run dev",
         "server": "cd server && npm run dev",
         "dev": "npm run server & npm run client",
-        "build": "cd client && npm run build",
+        "build": "npm run postinstall",
         "start": "cd server && npm start",
-        "build:render": "npm run install-all && cd client && npm run build && cd .. && mkdir -p server/public && cp -r client/build/* server/public/",
+        "postinstall": "cd client && npm install && npm run build",
         "install-all": "npm install && cd client && npm install && cd ../server && npm install"
     },
     "keywords": [

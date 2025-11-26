@@ -35,21 +35,16 @@ const authMiddleware = (req, res, next) => {
 };
 
 // Serve static files from the React app (production build)
-const publicPath = path.join(__dirname, 'public');
-console.log('Serving static files from:', publicPath);
+const clientBuildPath = path.join(__dirname, '../client/build');
+console.log('Serving static files from:', clientBuildPath);
 const fs = require('fs');
-if (fs.existsSync(publicPath)) {
-    console.log('Public directory contents:', fs.readdirSync(publicPath));
-    const assetsPath = path.join(publicPath, 'assets');
-    if (fs.existsSync(assetsPath)) {
-        console.log('Assets directory contents:', fs.readdirSync(assetsPath));
-    } else {
-        console.log('Assets directory does not exist');
-    }
+if (fs.existsSync(clientBuildPath)) {
+    console.log('Client build directory exists');
+    console.log('Contents:', fs.readdirSync(clientBuildPath));
 } else {
-    console.log('Public directory does not exist');
+    console.log('Client build directory does not exist');
 }
-app.use(express.static(publicPath));
+app.use(express.static(clientBuildPath));
 
 // MongoDB Connection
 const connectDB = async () => {
@@ -63,6 +58,8 @@ const connectDB = async () => {
 };
 
 connectDB();
+
+// Contact Schema
 
 // Contact Schema
 const contactSchema = new mongoose.Schema({
@@ -213,5 +210,5 @@ app.listen(PORT, () => {
 
 // Catch-all handler: send back React's index.html file for client-side routing
 app.get(/.*/, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
 });

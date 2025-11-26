@@ -7,6 +7,7 @@ This guide explains how to deploy the Pratyush Tripathi Portfolio to Render usin
 - GitHub repository with the code
 - Render account ([sign up for free](https://render.com))
 - MongoDB Atlas database (or other MongoDB instance)
+  - **Important**: You must whitelist `0.0.0.0/0` (allow access from anywhere) in MongoDB Atlas Network Access, as Render's IPs are dynamic.
 
 ## One-Time Setup on Render
 
@@ -34,7 +35,7 @@ In the Render dashboard for your service, add these environment variables:
 | `NODE_ENV` | `production` | Sets Node environment |
 | `MONGODB_URL` | `mongodb+srv://...` | Your MongoDB connection string |
 | `PORT` | Auto-set by Render | Don't manually set this |
-| `CLIENT_URL` | `https://your-client.onrender.com` | URL of your deployed client (for CORS) |
+| `CLIENT_URL` | `https://pratyushtripathi.onrender.com` | URL of your deployed client (for CORS) |
 | `ADMIN_PASSKEY` | `admin123` | Passkey for Admin Login |
 | `JWT_SECRET` | `your_secret_key` | Secret for session tokens |
 

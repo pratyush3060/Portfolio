@@ -2,13 +2,37 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
+
+const ADMIN_PASSKEY = process.env.ADMIN_PASSKEY || 'admin123'; // Default fallback
+const JWT_SECRET = process.env.JWT_SECRET || 'secret_key_change_me';
 
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: process.env.CLIENT_URL || 'https://pratyushtripathi.onrender.com',
+    credentials: true
+}));
 app.use(express.json());
+
+// Auth Middleware
+const authMiddleware = (req, res, next) => {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+
+    if (!token) {
+        return res.status(401).json({ success: false, message: 'Access denied. No token provided.' });
+    }
+
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        req.user = decoded;
+        next();
+    } catch (error) {
+        res.status(400).json({ success: false, message: 'Invalid token.' });
+    }
+};
 
 // Serve static files from the React app (production build)
 app.use(express.static(path.join(__dirname, 'public')));
@@ -16,7 +40,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // MongoDB Connection
 const connectDB = async () => {
     try {
-        await mongoose.connect(process.env.MONGODB_URL);
+        await mongoose.connect(process.env.MONGODB_URI || process.env.MONGODB_URL);
         console.log('MongoDB Atlas connected successfully');
     } catch (error) {
         console.error('MongoDB connection error:', error);
@@ -51,12 +75,28 @@ const contactSchema = new mongoose.Schema({
     createdAt: {
         type: Date,
         default: Date.now
+    },
+    isRead: {
+        type: Boolean,
+        default: false
     }
 });
 
 const Contact = mongoose.model('Contact', contactSchema);
 
 // API Routes
+
+// POST - Admin Login
+app.post('/api/login', (req, res) => {
+    const { passkey } = req.body;
+
+    if (passkey === ADMIN_PASSKEY) {
+        const token = jwt.sign({ role: 'admin' }, JWT_SECRET, { expiresIn: '24h' });
+        res.json({ success: true, token });
+    } else {
+        res.status(401).json({ success: false, message: 'Invalid passkey' });
+    }
+});
 
 // POST - Submit contact form
 app.post('/api/contact', async (req, res) => {
@@ -95,7 +135,7 @@ app.post('/api/contact', async (req, res) => {
 });
 
 // GET - Fetch all contacts (for admin)
-app.get('/api/contacts', async (req, res) => {
+app.get('/api/contacts', authMiddleware, async (req, res) => {
     try {
         const contacts = await Contact.find().sort({ createdAt: -1 });
         res.status(200).json({
@@ -112,7 +152,7 @@ app.get('/api/contacts', async (req, res) => {
 });
 
 // DELETE - Delete a contact (for admin)
-app.delete('/api/contact/:id', async (req, res) => {
+app.delete('/api/contact/:id', authMiddleware, async (req, res) => {
     try {
         await Contact.findByIdAndDelete(req.params.id);
         res.status(200).json({
@@ -128,9 +168,26 @@ app.delete('/api/contact/:id', async (req, res) => {
     }
 });
 
-// Catch-all route: serve React app for any other routes (must be after API routes)
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+// PUT - Mark contact as read
+app.put('/api/contact/:id', authMiddleware, async (req, res) => {
+    try {
+        const contact = await Contact.findByIdAndUpdate(
+            req.params.id,
+            { isRead: true },
+            { new: true }
+        );
+        res.status(200).json({
+            success: true,
+            data: contact,
+            message: 'Marked as read'
+        });
+    } catch (error) {
+        console.error('Error updating contact:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update contact'
+        });
+    }
 });
 
 const PORT = process.env.PORT || 5000;

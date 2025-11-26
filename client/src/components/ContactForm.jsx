@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import API_BASE_URL from '../config';
 
 function ContactForm() {
     const [formData, setFormData] = useState({
@@ -25,7 +26,7 @@ function ContactForm() {
         setStatus({ type: '', message: '' });
 
         try {
-            const response = await axios.post('http://localhost:5000/api/contact', formData);
+            const response = await axios.post(`${API_BASE_URL}/api/contact`, formData);
 
             if (response.data.success) {
                 setStatus({ type: 'success', message: response.data.message });

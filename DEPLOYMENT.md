@@ -19,9 +19,9 @@ This guide explains how to deploy the Pratyush Tripathi Portfolio to Render usin
    - **Name**: `pratyush-portfolio` (or your choice)
    - **Region**: Choose closest to your users
    - **Branch**: `main`
-   - **Root Directory**: leave blank
+   - **Root Directory**: `server`
    - **Runtime**: `Node`
-   - **Build Command**: `npm run install-all && cd client && npm run build`
+   - **Build Command**: `npm install`
    - **Start Command**: `npm start`
    - **Plan**: Free (or upgrade as needed)
 
@@ -34,6 +34,9 @@ In the Render dashboard for your service, add these environment variables:
 | `NODE_ENV` | `production` | Sets Node environment |
 | `MONGODB_URL` | `mongodb+srv://...` | Your MongoDB connection string |
 | `PORT` | Auto-set by Render | Don't manually set this |
+| `CLIENT_URL` | `https://your-client.onrender.com` | URL of your deployed client (for CORS) |
+| `ADMIN_PASSKEY` | `admin123` | Passkey for Admin Login |
+| `JWT_SECRET` | `your_secret_key` | Secret for session tokens |
 
 ### Step 3: Get Deploy Hook URL
 

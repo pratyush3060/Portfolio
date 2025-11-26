@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import API_BASE_URL from '../config';
 import { useNavigate } from 'react-router-dom';
 
 function Admin() {
@@ -13,12 +14,18 @@ function Admin() {
 
     const fetchContacts = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/contacts');
+            const token = localStorage.getItem('adminToken');
+            const response = await axios.get(`${API_BASE_URL}/api/contacts`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             if (response.data.success) {
                 setContacts(response.data.data);
             }
         } catch (error) {
             console.error('Error fetching contacts:', error);
+            if (error.response?.status === 401) {
+                navigate('/login');
+            }
         } finally {
             setLoading(false);
         }
@@ -27,12 +34,30 @@ function Admin() {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this message?')) {
             try {
-                await axios.delete(`http://localhost:5000/api/contact/${id}`);
+                const token = localStorage.getItem('adminToken');
+                await axios.delete(`${API_BASE_URL}/api/contact/${id}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
                 setContacts(contacts.filter(contact => contact._id !== id));
             } catch (error) {
                 console.error('Error deleting contact:', error);
                 alert('Failed to delete message');
             }
+        }
+    };
+
+    const handleMarkAsRead = async (id) => {
+        try {
+            const token = localStorage.getItem('adminToken');
+            await axios.put(`${API_BASE_URL}/api/contact/${id}`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setContacts(contacts.map(contact =>
+                contact._id === id ? { ...contact, isRead: true } : contact
+            ));
+        } catch (error) {
+            console.error('Error updating contact:', error);
+            alert('Failed to update status');
         }
     };
 
@@ -77,12 +102,20 @@ function Admin() {
                 ) : (
                     <div className="contacts-grid">
                         {contacts.map((contact) => (
-                            <div key={contact._id} className="contact-card-admin">
+                            <div key={contact._id} className={`contact-card-admin ${contact.isRead ? 'read' : 'unread'}`} style={{ opacity: contact.isRead ? 0.7 : 1 }}>
                                 <div className="contact-header-admin">
                                     <div>
                                         <h4>{contact.name}</h4>
                                         <p className="contact-date">{formatDate(contact.createdAt)}</p>
                                     </div>
+                                    <button
+                                        onClick={() => handleMarkAsRead(contact._id)}
+                                        className="btn-action me-2"
+                                        title="Mark as Read"
+                                        style={{ background: 'none', border: 'none', color: '#4facfe' }}
+                                    >
+                                        <i className={`bi ${contact.isRead ? 'bi-envelope-open' : 'bi-envelope'}`}></i>
+                                    </button>
                                     <button
                                         onClick={() => handleDelete(contact._id)}
                                         className="btn-delete"

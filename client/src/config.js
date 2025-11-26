@@ -1,11 +1,13 @@
-// TODO: Replace with your actual backend URL deployed on Render
-const SERVER_URL = 'https://portfoliobackend-w2l0.onrender.com';
-
-const API_BASE_URL = window.location.hostname === 'localhost' ? 'http://localhost:5000' : SERVER_URL;
+// Unified deployment: Same server handles both frontend and API
+// In production, use the same origin (relative path)
+// In development, point to localhost backend
+const API_BASE_URL = window.location.hostname === 'localhost'
+    ? 'http://localhost:5000'
+    : window.location.origin;
 
 console.log('Config Debug:', {
     hostname: window.location.hostname,
-    SERVER_URL,
+    origin: window.location.origin,
     API_BASE_URL
 });
 

@@ -11,8 +11,9 @@ const JWT_SECRET = process.env.JWT_SECRET || 'secret_key_change_me';
 const app = express();
 
 // Middleware
+// For unified deployment, allow same-origin requests
 app.use(cors({
-    origin: process.env.CLIENT_URL || 'https://pratyushtripathi.onrender.com',
+    origin: true, // Allow all origins in development, or set specific origin
     credentials: true
 }));
 app.use(express.json());

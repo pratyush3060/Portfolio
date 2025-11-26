@@ -39,25 +39,6 @@ In the Render dashboard for your service, add these environment variables:
 | `ADMIN_PASSKEY` | `admin123` | Passkey for Admin Login |
 | `JWT_SECRET` | `your_secret_key` | Secret for session tokens |
 
-### Step 3: Get Deploy Hook URL
-
-1. In your Render service settings, scroll to **"Deploy Hook"**
-2. Copy the deploy hook URL (looks like `https://api.render.com/deploy/srv-...`)
-
-### Step 4: Add Deploy Hook to GitHub Secrets
-
-1. Go to your GitHub repository → **Settings** → **Secrets and variables** → **Actions**
-2. Click **"New repository secret"**
-3. Name: `RENDER_DEPLOY_HOOK`
-4. Value: Paste the deploy hook URL from Step 3
-5. Click **"Add secret"**
-
-## How It Works
-
-### Automatic Deployment
-
-Every time you push to the `main` branch:
-
 1. **GitHub Actions workflow triggers** (`.github/workflows/deploy-render.yml`)
 2. **Dependencies install** for root, client, and server
 3. **React frontend builds** to `server/public` directory

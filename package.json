@@ -9,6 +9,7 @@
         "dev": "npm run server & npm run client",
         "build": "cd client && npm run build",
         "start": "cd server && npm start",
+        "build:render": "npm run install-all && cd client && npm run build && cd .. && mkdir -p server/public && cp -r client/build/* server/public/",
         "install-all": "npm install && cd client && npm install && cd ../server && npm install"
     },
     "keywords": [

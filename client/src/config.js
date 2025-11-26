@@ -1,13 +1,15 @@
-// Unified deployment: Same server handles both frontend and API
-// In production, use the same origin (relative path)
-// In development, point to localhost backend
+// Separate deployment: Static site (client) + Web Service (API)
+// Client is deployed as Render Static Site
+// Server is deployed as Render Web Service
+const BACKEND_URL = 'https://portfoliobackend-w2l0.onrender.com';
+
 const API_BASE_URL = window.location.hostname === 'localhost'
     ? 'http://localhost:5000'
-    : window.location.origin;
+    : BACKEND_URL;
 
 console.log('Config Debug:', {
     hostname: window.location.hostname,
-    origin: window.location.origin,
+    BACKEND_URL,
     API_BASE_URL
 });
 

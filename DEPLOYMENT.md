@@ -1,140 +1,242 @@
-# Deployment Guide for Render
+# Deployment Guide for Render (Separate Services)
 
-This guide explains how to deploy the Pratyush Tripathi Portfolio to Render using the automated CI/CD pipeline.
+This guide explains how to deploy the Pratyush Tripathi Portfolio using **separate Render services**:
+- **Static Site** for the React frontend
+- **Web Service** for the Express API backend
+
+## Architecture Overview
+
+```
+Portfolio Architecture:
+├── Client (React)          → Render Static Site
+│   └── Build output: client/build/
+│
+└── Server (Express API)    → Render Web Service
+    └── API routes: /api/*
+```
+
+**Benefits:**
+- Independent scaling for frontend and backend
+- Faster deployments (only rebuild what changed)
+- Better separation of concerns
+- Optimized static asset delivery
 
 ## Prerequisites
 
 - GitHub repository with the code
 - Render account ([sign up for free](https://render.com))
-- MongoDB Atlas database (or other MongoDB instance)
-  - **Important**: You must whitelist `0.0.0.0/0` (allow access from anywhere) in MongoDB Atlas Network Access, as Render's IPs are dynamic.
+- MongoDB Atlas database with IP whitelist set to `0.0.0.0/0` (allow all)
 
-## One-Time Setup on Render
+## Deployment Steps
 
-### Step 1: Create Web Service
+### Step 1: Deploy Backend API (Web Service)
 
 1. Go to [Render Dashboard](https://dashboard.render.com/)
 2. Click **"New +"** → **"Web Service"**
 3. Connect your GitHub repository
 4. Configure the service:
-   - **Name**: `pratyush-portfolio` (or your choice)
+   - **Name**: `portfolio-backend` (or your choice)
    - **Region**: Choose closest to your users
    - **Branch**: `main`
    - **Root Directory**: `server`
    - **Runtime**: `Node`
    - **Build Command**: `npm install`
    - **Start Command**: `npm start`
-   - **Plan**: Free (or upgrade as needed)
+   - **Plan**: Free
 
-### Step 2: Configure Environment Variables
+5. **Set Environment Variables**:
 
-In the Render dashboard for your service, add these environment variables:
+   | Key | Value | Required |
+   |-----|-------|----------|
+   | `NODE_ENV` | `production` | Yes |
+   | `MONGODB_URL` | `mongodb+srv://...` | Yes |
+   | `ADMIN_PASSKEY` | `your_admin_passkey` | Yes |
+   | `JWT_SECRET` | `your_jwt_secret` | Yes |
 
-| Key | Value | Notes |
-|-----|-------|-------|
-| `NODE_ENV` | `production` | Sets Node environment |
-| `MONGODB_URL` | `mongodb+srv://...` | Your MongoDB connection string |
-| `PORT` | Auto-set by Render | Don't manually set this |
-| `CLIENT_URL` | `https://pratyushtripathi.onrender.com` | URL of your deployed client (for CORS) |
-| `ADMIN_PASSKEY` | `admin123` | Passkey for Admin Login |
-| `JWT_SECRET` | `your_secret_key` | Secret for session tokens |
+6. Click **"Create Web Service"**
+7. **Note the backend URL** (e.g., `https://portfolio-backend-abc123.onrender.com`)
 
-1. **GitHub Actions workflow triggers** (`.github/workflows/deploy-render.yml`)
-2. **Dependencies install** for root, client, and server
-3. **React frontend builds** to `server/public` directory
-4. **Deployment triggers** via Render deploy hook
-5. **Render rebuilds and redeploys** your application
+### Step 2: Deploy Frontend (Static Site)
 
-### Manual Deployment
+1. In Render Dashboard, click **"New +"** → **"Static Site"**
+2. Connect the same GitHub repository
+3. Configure the static site:
+   - **Name**: `pratyush-portfolio`
+   - **Branch**: `main`
+   - **Build Command**: `cd client && npm install && npm run build`
+   - **Publish Directory**: `client/build`
 
-You can also trigger deployment manually:
+4. **Add Rewrite Rule** (for client-side routing):
+   - Source: `/*`
+   - Destination: `/index.html`
+   - Action: `Rewrite`
 
-1. Go to GitHub repository → **Actions** tab
-2. Select **"Deploy to Render"** workflow
-3. Click **"Run workflow"** → Choose branch → **"Run workflow"**
+5. **Optional - Custom Domain**:
+   - Add your custom domain if you have one
+   - Otherwise, use the Render subdomain
 
-## Architecture
+6. Click **"Create Static Site"**
 
+### Step 3: Update Backend URL in Code (If Different)
+
+If your backend URL is different from `https://portfoliobackend-w2l0.onrender.com`:
+
+1. Update `client/src/config.js`:
+   ```javascript
+   const BACKEND_URL = 'https://your-backend-url.onrender.com';
+   ```
+
+2. Rebuild and redeploy:
+   ```bash
+   cd client
+   npm run build
+   git add .
+   git commit -m "Update backend URL"
+   git push origin main
+   ```
+
+### Step 4: Verify CORS Configuration
+
+Ensure your backend allows requests from the frontend:
+- Frontend URL: `https://pratyushtripathi.onrender.com`
+- Backend CORS is already configured in `server/server.js`
+
+## Automated Deployment (Optional)
+
+### Using Render Blueprint
+
+The `render.yaml` file defines both services. To use it:
+
+1. Delete any existing services on Render (optional)
+2. Click **"New +"** → **"Blueprint"**
+3. Connect your repository
+4. Render will create both services automatically
+
+**Note**: You'll still need to add environment variables manually.
+
+### GitHub Actions CI/CD
+
+Update `.github/workflows/deploy-render.yml` if you want automated deployments on push.
+
+## Verification
+
+### Testing the Backend API
+
+```bash
+# Health check
+curl https://your-backend.onrender.com/health
+
+# Should return:
+{"status":"ok","service":"Portfolio API","timestamp":"..."}
 ```
-Portfolio Structure:
-├── client/              # React frontend (Vite)
-│   ├── src/
-│   └── vite.config.js   # Builds to ../server/public
-├── server/              # Express backend
-│   ├── server.js        # Serves API + React build
-│   ├── public/          # Built React app (gitignored)
-│   └── .env             # Environment variables (gitignored)
-└── .github/
-    └── workflows/
-        └── deploy-render.yml  # CI/CD pipeline
-```
 
-**Unified Deployment**: The Express server serves both the API routes (`/api/*`) and the built React frontend (all other routes).
+### Testing the Frontend
 
-## Verifying Deployment
+1. Visit your static site URL (e.g., `https://pratyushtripathi.onrender.com`)
+2. Verify the portfolio loads
+3. Test the contact form - it should submit without CORS errors
+4. Navigate to `/admin` - it should show the login page
+5. Login with your admin passkey
+6. Verify you can see submitted contacts
 
-### Check Build Logs
+## Common Issues
 
-1. Go to Render Dashboard → Your service
-2. Click on the latest deploy in **"Events"**
-3. Review build and deploy logs
+### CORS Errors
 
-### Test the Application
+**Symptom**: Contact form fails with CORS error in browser console
 
-1. Visit your Render URL (e.g., `https://pratyush-portfolio.onrender.com`)
-2. Verify the portfolio loads correctly
-3. Test the contact form submission
-4. Check MongoDB to confirm data is being saved
+**Solution**:
+1. Check that your frontend URL is in the CORS origin list in `server/server.js`
+2. Verify there's no trailing slash mismatch
+3. Redeploy the backend after updating CORS
 
-### Common Issues
+### Admin Page Shows 404
 
-| Issue | Solution |
-|-------|----------|
-| "Module not found" errors | Ensure all dependencies are in `package.json` files |
-| Contact form fails | Verify `MONGODB_URL` is set correctly in Render |
-| 404 on refresh | Catch-all route in `server.js` should handle this |
-| Slow first load | Free tier spins down after inactivity; upgrade or use keep-alive service |
+**Symptom**: Navigating to `/admin` shows "Page Not Found"
+
+**Solution**:
+1. Ensure the static site has a rewrite rule: `/*` → `/index.html`
+2. Check Render Static Site settings → Redirects/Rewrites
+
+### Backend Not Connecting to MongoDB
+
+**Symptom**: Backend logs show "MongoDB connection error"
+
+**Solution**:
+1. Verify `MONGODB_URL` environment variable is set correctly
+2. Check MongoDB Atlas Network Access allows `0.0.0.0/0`
+3. Test connection string locally first
+
+### Slow First Load
+
+**Issue**: Free tier services spin down after inactivity
+
+**Solutions**:
+- Upgrade to paid tier for always-on services
+- Use a keep-alive service (e.g., UptimeRobot) to ping your backend every 5 minutes
+- Accept the 30-second cold start on free tier
 
 ## Environment Variables Reference
 
-### Production (.env in server/)
+### Backend (Web Service)
+
 ```env
-MONGODB_URL=mongodb+srv://username:password@cluster.mongodb.net/portfolio?retryWrites=true&w=majority
+NODE_ENV=production
+MONGODB_URL=mongodb+srv://username:password@cluster.mongodb.net/portfolio
+ADMIN_PASSKEY=your_secure_passkey
+JWT_SECRET=your_secure_random_string
 PORT=5000
 ```
 
-⚠️ **Never commit `.env` files to Git!** They're in `.gitignore`.
+### Frontend (Static Site)
 
-## Updating the Application
+No environment variables needed - configuration is in `client/src/config.js`
 
-1. Make changes to your code locally
-2. Commit and push to `main` branch:
-   ```bash
-   git add .
-   git commit -m "Your update message"
-   git push origin main
-   ```
-3. GitHub Actions automatically triggers deployment
-4. Monitor progress in GitHub Actions tab
-5. Verify changes on Render after deployment completes
+## Updating Your Application
 
-## Optional: Render Blueprint
+### Update Frontend Only
 
-The `render.yaml` file in the root allows you to use Render's Infrastructure as Code:
+```bash
+cd client
+# Make your changes
+npm run build
+git add .
+git commit -m "Update frontend"
+git push origin main
+```
 
-1. Go to Render Dashboard
-2. Click **"New +"** → **"Blueprint"**
-3. Connect your repository
-4. Render will read `render.yaml` and create the service automatically
+Render will automatically rebuild and deploy the static site.
 
-This is useful for replicating the setup or managing multiple environments.
+### Update Backend Only
 
-## Support
+```bash
+cd server
+# Make your changes
+git add .
+git commit -m "Update API"
+git push origin main
+```
+
+Render will automatically rebuild and deploy the web service.
+
+### Update Both
+
+```bash
+# Make changes to both client/ and server/
+git add .
+git commit -m "Update both frontend and backend"
+git push origin main
+```
+
+Both services will rebuild independently.
+
+## Support & Resources
 
 - **Render Docs**: https://render.com/docs
-- **GitHub Actions Docs**: https://docs.github.com/actions
-- **MongoDB Atlas Docs**: https://www.mongodb.com/docs/atlas/
+- **Static Sites**: https://render.com/docs/static-sites
+- **Web Services**: https://render.com/docs/web-services
+- **MongoDB Atlas**: https://www.mongodb.com/docs/atlas/
 
 ---
 
-**Need help?** Check the deployment logs in Render and GitHub Actions for error messages.
+**Need help?** Check deployment logs in Render dashboard for both services.

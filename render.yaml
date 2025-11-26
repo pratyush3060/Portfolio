@@ -1,15 +1,39 @@
 services:
+  # Static Site for React Client
   - type: web
-    name: pratyush-portfolio
+    name: pratyush-portfolio-static
+    runtime: static
+    buildCommand: cd client && npm install && npm run build
+    staticPublishPath: ./client/build
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: SAMEORIGIN
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+
+  # Web Service for Express API
+  - type: web
+    name: portfolio-backend
     runtime: node
-    region: oregon # Change to your preferred region
-    plan: free # Change to paid plan if needed
-    buildCommand: chmod +x build.sh && ./build.sh
+    region: oregon
+    plan: free
+    rootDir: ./server
+    buildCommand: npm install
     startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
       - key: MONGODB_URL
         sync: false # Set this in Render dashboard
-    healthCheckPath: /api/contacts
+      - key: ADMIN_PASSKEY
+        sync: false # Set this in Render dashboard
+      - key: JWT_SECRET
+        sync: false # Set this in Render dashboard
+    healthCheckPath: /health
     autoDeploy: true

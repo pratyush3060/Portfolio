@@ -11,9 +11,13 @@ const JWT_SECRET = process.env.JWT_SECRET || 'secret_key_change_me';
 const app = express();
 
 // Middleware
-// For unified deployment, allow same-origin requests
+// For separate deployment: allow static site origin
 app.use(cors({
-    origin: true, // Allow all origins in development, or set specific origin
+    origin: [
+        'https://pratyushtripathi.onrender.com',  // Production static site
+        'http://localhost:5173',                   // Local development
+        'http://localhost:3000'                    // Alternative local port
+    ],
     credentials: true
 }));
 app.use(express.json());
@@ -35,17 +39,8 @@ const authMiddleware = (req, res, next) => {
     }
 };
 
-// Serve static files from the React app (production build)
-const clientBuildPath = path.join(__dirname, '../client/build');
-console.log('Serving static files from:', clientBuildPath);
-const fs = require('fs');
-if (fs.existsSync(clientBuildPath)) {
-    console.log('Client build directory exists');
-    console.log('Contents:', fs.readdirSync(clientBuildPath));
-} else {
-    console.log('Client build directory does not exist');
-}
-app.use(express.static(clientBuildPath));
+// API-only server - no static file serving
+// Client is deployed separately as a Render Static Site
 
 // MongoDB Connection
 const connectDB = async () => {
@@ -202,40 +197,13 @@ app.put('/api/contact/:id', authMiddleware, async (req, res) => {
     }
 });
 
-// Debug route to list files
-app.get('/debug-files', (req, res) => {
-    const fs = require('fs');
-    const clientBuildPath = path.join(__dirname, '../client/build');
-    let output = `Build Path: ${clientBuildPath}\n\n`;
-
-    try {
-        if (fs.existsSync(clientBuildPath)) {
-            output += 'Root contents:\n';
-            const files = fs.readdirSync(clientBuildPath);
-            output += files.join('\n') + '\n\n';
-
-            const assetsPath = path.join(clientBuildPath, 'assets');
-            if (fs.existsSync(assetsPath)) {
-                output += 'Assets contents:\n';
-                const assets = fs.readdirSync(assetsPath);
-                output += assets.join('\n') + '\n';
-            } else {
-                output += 'Assets directory missing!\n';
-            }
-        } else {
-            output += 'Build directory missing!\n';
-        }
-    } catch (err) {
-        output += `Error: ${err.message}`;
-    }
-
-    res.type('text/plain').send(output);
-});
-
-// Catch-all handler: send back React's index.html file for client-side routing
-// MUST be the last route defined
-app.use((req, res) => {
-    res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.json({
+        status: 'ok',
+        service: 'Portfolio API',
+        timestamp: new Date().toISOString()
+    });
 });
 
 const PORT = process.env.PORT || 5000;

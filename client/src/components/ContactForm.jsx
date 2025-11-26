@@ -26,6 +26,7 @@ function ContactForm() {
         setStatus({ type: '', message: '' });
 
         try {
+            console.log('Submitting to:', `${API_BASE_URL}/api/contact`);
             const response = await axios.post(`${API_BASE_URL}/api/contact`, formData);
 
             if (response.data.success) {

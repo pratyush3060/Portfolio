@@ -208,6 +208,36 @@ app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
 
+// Debug route to list files
+app.get('/debug-files', (req, res) => {
+    const fs = require('fs');
+    const clientBuildPath = path.join(__dirname, '../client/build');
+    let output = `Build Path: ${clientBuildPath}\n\n`;
+
+    try {
+        if (fs.existsSync(clientBuildPath)) {
+            output += 'Root contents:\n';
+            const files = fs.readdirSync(clientBuildPath);
+            output += files.join('\n') + '\n\n';
+
+            const assetsPath = path.join(clientBuildPath, 'assets');
+            if (fs.existsSync(assetsPath)) {
+                output += 'Assets contents:\n';
+                const assets = fs.readdirSync(assetsPath);
+                output += assets.join('\n') + '\n';
+            } else {
+                output += 'Assets directory missing!\n';
+            }
+        } else {
+            output += 'Build directory missing!\n';
+        }
+    } catch (err) {
+        output += `Error: ${err.message}`;
+    }
+
+    res.type('text/plain').send(output);
+});
+
 // Catch-all handler: send back React's index.html file for client-side routing
 app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, '../client/build', 'index.html'));

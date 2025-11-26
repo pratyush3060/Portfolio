@@ -35,7 +35,21 @@ const authMiddleware = (req, res, next) => {
 };
 
 // Serve static files from the React app (production build)
-app.use(express.static(path.join(__dirname, 'public')));
+const publicPath = path.join(__dirname, 'public');
+console.log('Serving static files from:', publicPath);
+const fs = require('fs');
+if (fs.existsSync(publicPath)) {
+    console.log('Public directory contents:', fs.readdirSync(publicPath));
+    const assetsPath = path.join(publicPath, 'assets');
+    if (fs.existsSync(assetsPath)) {
+        console.log('Assets directory contents:', fs.readdirSync(assetsPath));
+    } else {
+        console.log('Assets directory does not exist');
+    }
+} else {
+    console.log('Public directory does not exist');
+}
+app.use(express.static(publicPath));
 
 // MongoDB Connection
 const connectDB = async () => {
